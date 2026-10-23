@@ -1,0 +1,1 @@
+docker exec -i metric_postgres psql -U postgres -d metric_db < dashboard_mock.sql
