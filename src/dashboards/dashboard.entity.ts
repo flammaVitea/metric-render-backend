@@ -15,6 +15,15 @@ export class DashboardEntity {
   })
   sectionOrder: string[];
 
+  // Зберігає порядок графіків для кожної секції, наприклад: { "Секція 1": ["id1", "id2"] }
+  @Column({
+    name: 'charts_order',
+    type: 'jsonb',
+    nullable: true,
+    default: () => "'{}'::jsonb",
+  })
+  chartsOrder: Record<string, string[]>;
+
   @Column({ name: 'user_id', type: 'text' })
   userId: string;
 }

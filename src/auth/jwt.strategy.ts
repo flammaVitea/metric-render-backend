@@ -5,7 +5,9 @@ import { UsersService } from '../users/users.service';
 
 export interface JwtPayload {
   sub: string;
-  username: string;
+  email: string;
+  orgId: string;
+  role: string;
 }
 
 @Injectable()
@@ -23,6 +25,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Користувача не знайдено');
     }
-    return { userId: user.id, username: user.username };
+    // Повертаємо role і orgId, щоб AdminGuard і контролери мали до них доступ
+    return {
+      userId: user.id,
+      email: user.email,
+      orgId: user.organizationId,
+      role: user.role,
+    };
   }
 }

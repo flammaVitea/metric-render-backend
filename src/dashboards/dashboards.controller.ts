@@ -46,6 +46,21 @@ export class DashboardsController {
     return this.dashboardsService.update(id, body, req.user?.userId);
   }
 
+  // Ендпоінт для оновлення порядку карток у секції
+  @Patch(':id/reorder-charts')
+  async reorderCharts(
+    @Param('id') id: string,
+    @Body() body: { sectionName: string; chartIds: string[] },
+    @Req() req: any,
+  ) {
+    return this.dashboardsService.reorderSectionCharts(
+      id,
+      body.sectionName,
+      body.chartIds,
+      req.user?.userId,
+    );
+  }
+
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -59,5 +74,19 @@ export class DashboardsController {
   async remove(@Param('id') id: string, @Req() req: any) {
     await this.dashboardsService.remove(id, req.user?.userId);
     return {};
+  }
+
+  @Patch(':id/layout')
+  async updateLayout(
+    @Param('id') id: string,
+    @Body() body: { sectionName: string; items: { id: string; span: number }[] },
+    @Req() req: any,
+  ) {
+    return this.dashboardsService.updateSectionLayout(
+      id,
+      body.sectionName,
+      body.items,
+      req.user?.userId,
+    );
   }
 }

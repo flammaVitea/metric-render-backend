@@ -1,4 +1,7 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+
+export type UserRole = 'ADMIN' | 'MEMBER';
+export type UserStatus = 'PENDING' | 'ACTIVE' | 'REJECTED';
 
 @Entity('users')
 export class UserEntity {
@@ -6,8 +9,20 @@ export class UserEntity {
   id: string;
 
   @Column({ type: 'text', unique: true })
-  username: string;
+  email: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'text', select: false })
   password: string;
+
+  @Column({ type: 'text', name: 'organization_id' })
+  organizationId: string;
+
+  @Column({ type: 'text', default: 'MEMBER' })
+  role: UserRole;
+
+  @Column({ type: 'text', default: 'PENDING' })
+  status: UserStatus;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 }

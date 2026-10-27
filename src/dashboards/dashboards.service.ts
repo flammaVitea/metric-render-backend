@@ -4,6 +4,12 @@ import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
 import { DashboardEntity } from './dashboard.entity';
 
+
+interface ChartLayoutItem {
+  id: string;
+  span: number;
+}
+
 @Injectable()
 export class DashboardsService {
   constructor(
@@ -16,6 +22,22 @@ export class DashboardsService {
       return this.dashboardsRepository.find({ where: { userId } });
     }
     return this.dashboardsRepository.find();
+  }
+
+  async updateSectionLayout(
+    dashboardId: string,
+    sectionName: string,
+    items: ChartLayoutItem[],
+    userId?: string,
+  ): Promise<DashboardEntity> {
+    const dashboard = await this.findOne(dashboardId, userId);
+    const currentOrder = dashboard.chartsOrder || {};
+  
+    // Зберігаємо масив об'єктів { id, span } для секції
+    currentOrder[sectionName] = items as any;
+    dashboard.chartsOrder = { ...currentOrder };
+
+    return this.dashboardsRepository.save(dashboard);
   }
 
   async findOne(id: string, userId?: string): Promise<DashboardEntity> {
@@ -38,6 +60,7 @@ export class DashboardsService {
       sectionOrder: Array.isArray(payload.sectionOrder)
         ? payload.sectionOrder
         : [],
+      chartsOrder: payload.chartsOrder ?? {},
       userId,
     });
     return this.dashboardsRepository.save(entity);
@@ -51,11 +74,25 @@ export class DashboardsService {
     const existing = await this.findOne(id, userId);
 
     if (payload.name !== undefined) existing.name = payload.name;
-    if (payload.sectionOrder !== undefined) {
-      existing.sectionOrder = payload.sectionOrder;
-    }
+    if (payload.sectionOrder !== undefined) existing.sectionOrder = payload.sectionOrder;
+    if (payload.chartsOrder !== undefined) existing.chartsOrder = payload.chartsOrder;
 
     return this.dashboardsRepository.save(existing);
+  }
+
+  // Метод швидкого оновлення порядку графіків конкретної секції
+  async reorderSectionCharts(
+    dashboardId: string,
+    sectionName: string,
+    chartIds: string[],
+    userId?: string,
+  ): Promise<DashboardEntity> {
+    const dashboard = await this.findOne(dashboardId, userId);
+    const currentOrder = dashboard.chartsOrder || {};
+    currentOrder[sectionName] = chartIds;
+
+    dashboard.chartsOrder = { ...currentOrder };
+    return this.dashboardsRepository.save(dashboard);
   }
 
   async remove(id: string, userId?: string): Promise<void> {

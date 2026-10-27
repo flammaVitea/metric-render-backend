@@ -11,7 +11,7 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS users (
     id           TEXT PRIMARY KEY,
-    username     TEXT NOT NULL UNIQUE,
+    email        TEXT NOT NULL UNIQUE,
     password     TEXT NOT NULL
 );
 
@@ -57,10 +57,10 @@ CREATE INDEX IF NOT EXISTS idx_charts_dashboard_id ON charts(dashboard_id);
 CREATE INDEX IF NOT EXISTS idx_charts_user_id ON charts(user_id);
 CREATE INDEX IF NOT EXISTS idx_charts_source_ids ON charts USING GIN(source_ids);
 
-INSERT INTO users (id, username, password)
-VALUES ('admin', 'admin', 'admin')
+INSERT INTO users (id, email, password)
+VALUES ('admin', 'admin@example.com', 'admin')
 ON CONFLICT (id) DO UPDATE SET
-    username = EXCLUDED.username,
+    email = EXCLUDED.email,
     password = EXCLUDED.password;
 
 INSERT INTO data_sources

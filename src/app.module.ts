@@ -11,18 +11,19 @@ import { DataSourceEntity } from './data-sources/data-source.entity';
 import { DataSourcesModule } from './data-sources/data-sources.module';
 import { UserEntity } from './users/user.entity';
 import { UsersModule } from './users/users.module';
+import { OrganizationEntity } from './organizations/organization.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 5432),
+      port: Number(process.env.DB_PORT ?? 5433),
       username: process.env.DB_USERNAME ?? 'admin', // або 'postgres' / 'metric_render_user'
       password: process.env.DB_PASSWORD ?? 'strong_password_here', // ваш реальний пароль
       database: process.env.DB_DATABASE ?? 'my_database', // або 'metric_db' / 'metric_render'
-      entities: [UserEntity, DataSourceEntity, DashboardEntity, ChartEntity],
-      synchronize: false,
+      entities: [UserEntity, OrganizationEntity, DataSourceEntity, DashboardEntity, ChartEntity],
+      synchronize: false, // Встановіть на false у production
     }),
     AuthModule,
     UsersModule,

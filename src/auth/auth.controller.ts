@@ -7,12 +7,14 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: { username?: string; password?: string }) {
-    return this.authService.login(body.username, body.password);
+  async login(@Body() body: { email?: string; password?: string }) {
+    return this.authService.login(body.email, body.password);
   }
 
   @Post('register')
-  async register(@Body() body: { username?: string; password?: string }) {
-    return this.authService.register(body.username, body.password);
+  async register(
+    @Body() body: { email?: string; password?: string; orgCode?: string },
+  ) {
+    return this.authService.register(body.email, body.password, body.orgCode);
   }
 }
