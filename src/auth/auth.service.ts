@@ -12,6 +12,9 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { isEmail } from 'class-validator';
 import { randomBytes } from 'crypto';
+
+import { v7 as uuidv7 } from 'uuid';
+
 import { UserEntity } from '../users/user.entity';
 import { OrganizationEntity } from '../organizations/organization.entity';
 
@@ -107,7 +110,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = this.usersRepository.create({
-      id: randomBytes(6).toString('base64url'),
+      id: uuidv7(),
       email: normalizedEmail,
       password: hashedPassword,
       organizationId: org.id,

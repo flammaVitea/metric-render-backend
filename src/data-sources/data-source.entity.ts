@@ -5,7 +5,7 @@ export type DataSourceStatus = 'active' | 'error' | 'pending';
 
 @Entity('data_sources')
 export class DataSourceEntity {
-  @PrimaryColumn({ type: 'text' })
+  @PrimaryColumn({ type: 'uuid' })
   id: string;
 
   @Column({ type: 'text' })
@@ -29,6 +29,6 @@ export class DataSourceEntity {
   @Column({ name: 'hidden_fields', type: 'jsonb', nullable: true })
   hiddenFields: string[] | null;
 
-  @Column({ name: 'user_id', type: 'text' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 }

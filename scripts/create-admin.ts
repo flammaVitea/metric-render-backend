@@ -3,6 +3,9 @@ import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { isEmail } from 'class-validator';
+
+import { v7 as uuidv7 } from 'uuid';
+
 import { randomBytes } from 'crypto';
 import { OrganizationEntity } from '../src/organizations/organization.entity';
 import { UserEntity } from '../src/users/user.entity';
@@ -27,7 +30,7 @@ async function bootstrap() {
 
   // 1. Генерація унікального коду організації (наприклад: ORG-A8F2K9)
   const inviteCode = `ORG-${randomBytes(3).toString('hex').toUpperCase()}`;
-  const orgId = randomBytes(32).toString('base64url');
+  const orgId = uuidv7();
 
   const org = orgRepo.create({
     id: orgId,
@@ -39,7 +42,7 @@ async function bootstrap() {
   // 2. Створення адміна зі статусом ACTIVE
   const hashedPassword = await bcrypt.hash(password, 10);
   const adminUser = userRepo.create({
-    id: randomBytes(32).toString('base64url'),
+    id: uuidv7(),
     email,
     password: hashedPassword,
     organizationId: org.id,

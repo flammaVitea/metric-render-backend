@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+
+import { v7 as uuidv7 } from 'uuid';
+
 import { DashboardEntity } from './dashboard.entity';
 
 
@@ -53,7 +56,7 @@ export class DashboardsService {
     payload: Partial<DashboardEntity>,
     userId: string,
   ): Promise<DashboardEntity> {
-    const id = payload.id || randomBytes(8).toString('base64url').slice(0, 11);
+    const id = payload.id || uuidv7();
     const entity = this.dashboardsRepository.create({
       id,
       name: payload.name ?? 'Новий дашборд',

@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+
+import { v7 as uuidv7 } from 'uuid';
+
 import { ChartEntity } from './chart.entity';
 
 export type ChartInput = Partial<ChartEntity> & { sourceId?: string };
@@ -58,7 +61,7 @@ export class ChartsService {
   }
 
   async create(payload: ChartInput, userId: string) {
-    const id = payload.id || randomBytes(8).toString('base64url').slice(0, 11);
+    const id = payload.id || uuidv7();
     const type = payload.type ?? 'bar';
     const sourceIds = this.normalizeSourceIds(payload, type);
 

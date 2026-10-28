@@ -2,10 +2,10 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('charts')
 export class ChartEntity {
-  @PrimaryColumn({ type: 'text' })
+  @PrimaryColumn({ type: 'uuid' })
   id: string;
 
-  @Column({ name: 'dashboard_id', type: 'text' })
+  @Column({ name: 'dashboard_id', type: 'uuid' })
   dashboardId: string;
 
   @Column({
@@ -33,6 +33,6 @@ export class ChartEntity {
   @Column({ type: 'text', nullable: true })
   color: string | null;
 
-  @Column({ name: 'user_id', type: 'text' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 }

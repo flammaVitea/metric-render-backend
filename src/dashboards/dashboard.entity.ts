@@ -2,7 +2,7 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('dashboards')
 export class DashboardEntity {
-  @PrimaryColumn({ type: 'text' })
+  @PrimaryColumn({ type: 'uuid' })
   id: string;
 
   @Column({ type: 'text' })
@@ -24,6 +24,6 @@ export class DashboardEntity {
   })
   chartsOrder: Record<string, string[]>;
 
-  @Column({ name: 'user_id', type: 'text' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 }

@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+
+import { v7 as uuidv7 } from 'uuid';
+
 import { DataSourceEntity } from './data-source.entity';
 
 @Injectable()
@@ -31,7 +34,7 @@ export class DataSourcesService {
     payload: Partial<DataSourceEntity>,
     userId: string,
   ): Promise<DataSourceEntity> {
-    const id = payload.id || randomBytes(8).toString('base64url').slice(0, 11);
+    const id = payload.id || uuidv7();
     const entity = this.dataSourcesRepository.create({
       id,
       name: payload.name,
