@@ -31,6 +31,36 @@
 $ pnpm install
 ```
 
+## Docker
+
+Set the required values in `.env` (see `.env.example` for the full list), then start the services:
+
+```bash
+docker compose up --build
+```
+
+The NestJS API is available at `http://localhost:3000`, pgAdmin at `http://localhost:5050`, and PostgreSQL on host port `5433` by default. Change these ports and credentials in `.env` as needed.
+
+On the first start with an empty PostgreSQL data volume, PostgreSQL imports SQL files from `backup-db/`. The backup is `backup-db/backup_2026-10-27_17-50-51.sql`. PostgreSQL only runs these initialization scripts for a new, empty data volume; it will not overwrite an existing database or re-import the backup on later starts.
+
+### Single-stage and multistage image comparison
+
+This project includes two Dockerfiles that use the same `node:22-alpine` base image:
+
+- `Dockerfile` builds and runs the API in one stage.
+- `Dockerfile.multistage` builds in one stage and installs production dependencies in a clean runtime stage.
+
+Build both images, print their sizes, then start the stack with the multistage image:
+
+```bash
+chmod +x docker-build-run.sh
+./docker-build-run.sh
+```
+
+To start the stack with the single-stage image instead, run `./docker-build-run.sh single-stage`. Press Ctrl+C to stop the stack. Compare the image sizes with `docker image ls metric-render-backend`.
+
+On the current build, Docker reports 708 MB for the single-stage image and 521 MB for the multistage image. Exact sizes can differ by platform and Docker version. A screenshot of the image listing is saved as `docker-images-screenshot.png`.
+
 ## Compile and run the project
 
 ```bash

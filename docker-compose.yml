@@ -4,30 +4,76 @@ services:
     container_name: postgres-16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: strong_password_here
-      POSTGRES_DB: my_database
+      POSTGRES_USER: ${DB_USERNAME:?Set DB_USERNAME in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_DATABASE:?Set DB_DATABASE in .env}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backup-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin4
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin_password_here
-      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True" # Оновлює сервери з json при кожному запуску
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@localhost}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: ${PGADMIN_REPLACE_SERVERS_ON_STARTUP:-True}
     ports:
-      - "5050:80"
+      - "${PGADMIN_HOST_PORT:-5050}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-      - ./servers.json:/pgadmin4/servers.json # Підключаємо файл конфігурації
+    configs:
+      - source: pgadmin_servers
+        target: /pgadmin4/servers.json
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: metric-render-backend:${APP_IMAGE_TAG:-single-stage}
+    build:
+      context: .
+      dockerfile: ${APP_DOCKERFILE:-Dockerfile}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:${APP_PORT:-3000}"
+    environment:
+      PORT: ${APP_PORT:-3000}
+      DB_HOST: ${DB_DOCKER_HOST:-postgres}
+      DB_PORT: ${DB_DOCKER_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_DATABASE: ${DB_DATABASE:?Set DB_DATABASE in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   pgadmin_data:
+
+configs:
+  pgadmin_servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "PostgreSQL",
+            "Group": "Servers",
+            "Host": "${DB_DOCKER_HOST:-postgres}",
+            "Port": ${DB_DOCKER_PORT:-5432},
+            "MaintenanceDB": "${DB_DATABASE}",
+            "Username": "${DB_USERNAME}",
+            "SSLMode": "prefer"
+          }
+        }
+      }
