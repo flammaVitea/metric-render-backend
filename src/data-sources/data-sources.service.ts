@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
 
 import { v7 as uuidv7 } from 'uuid';
 
@@ -34,7 +38,10 @@ export class DataSourcesService {
     payload: Partial<DataSourceEntity>,
     userId: string,
   ): Promise<DataSourceEntity> {
-    const id = payload.id || uuidv7();
+    const id = payload.id ?? uuidv7();
+    if (!isUUID(id, 'all')) {
+      throw new BadRequestException('ID джерела даних має бути UUID');
+    }
     const entity = this.dataSourcesRepository.create({
       id,
       name: payload.name,

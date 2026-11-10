@@ -1,12 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
 
 import { v7 as uuidv7 } from 'uuid';
 
 import { DashboardEntity } from './dashboard.entity';
-
 
 interface ChartLayoutItem {
   id: string;
@@ -56,7 +59,10 @@ export class DashboardsService {
     payload: Partial<DashboardEntity>,
     userId: string,
   ): Promise<DashboardEntity> {
-    const id = payload.id || uuidv7();
+    const id = payload.id ?? uuidv7();
+    if (!isUUID(id, 'all')) {
+      throw new BadRequestException('ID дашборда має бути UUID');
+    }
     const entity = this.dashboardsRepository.create({
       id,
       name: payload.name ?? 'Новий дашборд',

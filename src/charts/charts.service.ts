@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
+import { isUUID } from 'class-validator';
 
 import { v7 as uuidv7 } from 'uuid';
 
@@ -22,6 +26,10 @@ export class ChartsService {
       ids = payload.sourceIds.filter(Boolean);
     } else if (payload.sourceId) {
       ids = [payload.sourceId];
+    }
+
+    if (ids.some((id) => !isUUID(id, 'all'))) {
+      throw new BadRequestException('ID джерела даних має бути UUID');
     }
 
     // Для кругового графіка (pie) дозволяється лише одне джерело
@@ -61,7 +69,13 @@ export class ChartsService {
   }
 
   async create(payload: ChartInput, userId: string) {
-    const id = payload.id || uuidv7();
+    const id = payload.id ?? uuidv7();
+    if (!isUUID(id, 'all')) {
+      throw new BadRequestException('ID графіка має бути UUID');
+    }
+    if (!payload.dashboardId || !isUUID(payload.dashboardId, 'all')) {
+      throw new BadRequestException('ID дашборда має бути UUID');
+    }
     const type = payload.type ?? 'bar';
     const sourceIds = this.normalizeSourceIds(payload, type);
 

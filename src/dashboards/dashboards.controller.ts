@@ -33,7 +33,7 @@ export class DashboardsController {
 
   @Post()
   async create(@Body() body: Partial<DashboardEntity>, @Req() req: any) {
-    const userId = req.user?.userId ?? body.userId ?? 'admin';
+    const userId = req.user.userId;
     return this.dashboardsService.create(body, userId);
   }
 

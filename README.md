@@ -43,6 +43,28 @@ The NestJS API is available at `http://localhost:3000`, pgAdmin at `http://local
 
 On the first start with an empty PostgreSQL data volume, PostgreSQL imports SQL files from `backup-db/`. The backup is `backup-db/backup_2026-10-27_17-50-51.sql`. PostgreSQL only runs these initialization scripts for a new, empty data volume; it will not overwrite an existing database or re-import the backup on later starts.
 
+### Converting existing IDs to UUID
+
+The application uses UUIDs for entity IDs. On a new, empty PostgreSQL volume, Compose runs `migrations/20261110_convert_ids_to_uuid.sql` after importing the backup. For an existing database, stop the API and any other writers, create and verify a backup, then apply the migration once:
+
+```bash
+set -e
+
+docker compose exec -T postgres sh -c \
+  'pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+  > "$HOME/metric-render-backend-before-uuid.dump"
+
+test -s "$HOME/metric-render-backend-before-uuid.dump"
+
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+  < migrations/20261110_convert_ids_to_uuid.sql
+```
+
+The migration maps legacy IDs to UUIDs and updates database references, including chart data-source IDs and dashboard chart ordering. Existing UUIDs are preserved. User IDs change when they are not already UUIDs, so users need to sign in again to receive tokens containing their new IDs. The migration preserves users without an organization; their `organization_id` remains nullable.
+
+Do not use `docker compose down -v` to apply the migration; that removes the database volume. TypeORM schema synchronization is disabled, so schema changes must be applied through migrations.
+
 ### Single-stage and multistage image comparison
 
 This project includes two Dockerfiles that use the same `node:22-alpine` base image:

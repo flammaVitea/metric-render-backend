@@ -39,7 +39,7 @@ export class ChartsController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() body: ChartInput, @Req() req: any) {
-    const userId = req.user?.userId ?? body.userId ?? 'admin';
+    const userId = req.user.userId;
     return this.chartsService.create(body, userId);
   }
 

@@ -36,7 +36,7 @@ export class DataSourcesController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() body: Partial<DataSourceEntity>, @Req() req: any) {
-    const userId = req.user?.userId ?? body.userId ?? 'admin';
+    const userId = req.user.userId;
     return this.dataSourcesService.create(body, userId);
   }
 

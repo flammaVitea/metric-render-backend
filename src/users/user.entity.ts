@@ -5,7 +5,7 @@ export type UserStatus = 'PENDING' | 'ACTIVE' | 'REJECTED';
 
 @Entity('users')
 export class UserEntity {
-  @PrimaryColumn({ type: 'text' })
+  @PrimaryColumn({ type: 'uuid' })
   id: string;
 
   @Column({ type: 'text', unique: true })
@@ -14,8 +14,8 @@ export class UserEntity {
   @Column({ type: 'text', select: false })
   password: string;
 
-  @Column({ type: 'text', name: 'organization_id' })
-  organizationId: string;
+  @Column({ type: 'uuid', name: 'organization_id', nullable: true })
+  organizationId: string | null;
 
   @Column({ type: 'text', default: 'MEMBER' })
   role: UserRole;
