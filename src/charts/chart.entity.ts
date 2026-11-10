@@ -35,4 +35,7 @@ export class ChartEntity {
 
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @Column({ name: 'refresh_interval', type: 'int', nullable: true })
+  refreshInterval: number | null;
 }

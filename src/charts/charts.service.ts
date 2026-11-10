@@ -33,7 +33,7 @@ export class ChartsService {
     }
 
     // Для кругового графіка (pie) дозволяється лише одне джерело
-    if (chartType === 'pie' && ids.length > 1) {
+    if ((chartType === 'pie' || chartType === 'doughnut') && ids.length > 1) {
       ids = [ids[0]];
     }
     return ids;
@@ -90,6 +90,7 @@ export class ChartsService {
       yAxisField: payload.yAxisField ?? null,
       color: payload.color ?? '#1890ff',
       userId,
+      refreshInterval: payload.refreshInterval ?? null,
     });
 
     const saved = await this.chartsRepository.save(entity);
@@ -122,7 +123,10 @@ export class ChartsService {
       existing.yAxisField = payload.yAxisField;
     }
     if (payload.color !== undefined) existing.color = payload.color;
-
+    
+    if (payload.refreshInterval !== undefined) {
+      existing.refreshInterval = payload.refreshInterval;
+    }
     const saved = await this.chartsRepository.save(existing);
     return this.formatChartResponse(saved);
   }
