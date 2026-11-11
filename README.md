@@ -45,7 +45,7 @@ On the first start with an empty PostgreSQL data volume, PostgreSQL imports SQL 
 
 ### Converting existing IDs to UUID
 
-The application uses UUIDs for entity IDs. On a new, empty PostgreSQL volume, Compose runs `migrations/20261110_convert_ids_to_uuid.sql` after importing the backup. For an existing database, stop the API and any other writers, create and verify a backup, then apply the migration once:
+The application uses UUIDs for entity IDs. The UUID conversion is a one-time migration and is not run automatically by Compose. This avoids treating an existing-database migration as an init script; PostgreSQL only runs init scripts when its data volume is empty. Stop the API and any other writers, create and verify a backup, then apply the migration once:
 
 ```bash
 set -e
