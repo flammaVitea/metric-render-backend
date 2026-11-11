@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
 
-export type UserRole = 'ADMIN' | 'MEMBER';
+export type UserRole = 'ADMIN' | 'INTEGRATOR' | 'ANALYST' | 'MANAGER';
 export type UserStatus = 'PENDING' | 'ACTIVE' | 'REJECTED';
 
 @Entity('users')

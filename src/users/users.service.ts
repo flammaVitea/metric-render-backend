@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserEntity, UserStatus } from './user.entity';
+import { Repository, Not } from 'typeorm';
+import { UserEntity, UserStatus, UserRole } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -38,10 +38,10 @@ export class UsersService {
     });
   }
 
-  // Отримати всіх учасників організації
+  // Отримати всіх учасників організації (Окрім тих, хто в статусі PENDING)
   async findAllByOrg(organizationId: string): Promise<UserEntity[]> {
     return this.usersRepository.find({
-      where: { organizationId },
+      where: { organizationId, status: Not('PENDING') },
       select: {
         id: true,
         email: true,
@@ -69,5 +69,36 @@ export class UsersService {
 
     user.status = status;
     return this.usersRepository.save(user);
+  }
+
+  // Змінити роль користувача (ADMIN / MEMBER)
+  async updateRole(
+    userId: string,
+    organizationId: string,
+    role: UserRole,
+  ): Promise<UserEntity> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId, organizationId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Користувача не знайдено в цій організації');
+    }
+
+    user.role = role;
+    return this.usersRepository.save(user);
+  }
+
+  // Видалити користувача з організації
+  async removeUser(userId: string, organizationId: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId, organizationId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Користувача не знайдено в цій організації');
+    }
+
+    await this.usersRepository.remove(user);
   }
 }

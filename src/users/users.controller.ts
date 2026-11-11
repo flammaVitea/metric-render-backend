@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -12,7 +13,7 @@ import { IsIn } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/roles.guard';
 import { UsersService } from './users.service';
-import type { UserStatus } from './user.entity';
+import type { UserRole, UserStatus } from './user.entity';
 
 export class UpdateUserStatusDto {
   @IsIn(['ACTIVE', 'REJECTED', 'PENDING'], {
@@ -36,6 +37,26 @@ export class UsersController {
     }
     return [{ id: user.id, email: user.email }];
   }
+
+    // ЗМІНА РОЛІ (Тільки для ADMIN)
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch(':id/role')
+  async updateRole(
+    @Param('id') id: string,
+    @Body('role') role: UserRole,
+    @Req() req: any,
+  ) {
+    return this.usersService.updateRole(id, req.user.orgId, role);
+  }
+
+  // ВИДАЛЕННЯ КОРИСТУВАЧА (Тільки для ADMIN)
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete(':id')
+  async removeUser(@Param('id') id: string, @Req() req: any) {
+    await this.usersService.removeUser(id, req.user.orgId);
+    return { success: true };
+  }
+
 
   // Отримати список заявок на підтвердження (тільки для ADMIN)
   @UseGuards(JwtAuthGuard, AdminGuard)
