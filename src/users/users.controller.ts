@@ -39,15 +39,19 @@ export class UsersController {
   }
 
     // ЗМІНА РОЛІ (Тільки для ADMIN)
+  // ЗМІНА РОЛІ (Тільки для ADMIN)
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Patch(':id/role')
   async updateRole(
     @Param('id') id: string,
     @Body('role') role: UserRole,
+    @Body('adminPassword') adminPassword: string, // <-- Додано отримання пароля з тіла запиту
     @Req() req: any,
   ) {
-    return this.usersService.updateRole(id, req.user.orgId, role);
+    // Передаємо req.user.userId (це ID самого адміна) та adminPassword
+    return this.usersService.updateRole(id, req.user.orgId, role, req.user.userId, adminPassword);
   }
+
 
   // ВИДАЛЕННЯ КОРИСТУВАЧА (Тільки для ADMIN)
   @UseGuards(JwtAuthGuard, AdminGuard)

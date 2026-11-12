@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { UserEntity, UserStatus, UserRole } from './user.entity';
+
+import * as bcrypt from 'bcryptjs';
+
 
 @Injectable()
 export class UsersService {
@@ -71,12 +74,28 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  // Змінити роль користувача (ADMIN / MEMBER)
   async updateRole(
     userId: string,
     organizationId: string,
     role: UserRole,
+    adminId: string,
+    adminPassword?: string,
   ): Promise<UserEntity> {
+    if (!adminPassword) {
+      throw new UnauthorizedException('Потрібно ввести пароль адміністратора');
+    }
+
+    // ЗМІНЕНО: Використовуємо QueryBuilder, щоб примусово дістати приховане поле password
+    const admin = await this.usersRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id: adminId })
+      .getOne();
+
+    if (!admin || !(await bcrypt.compare(adminPassword, admin.password))) {
+      throw new UnauthorizedException('Невірний пароль адміністратора');
+    }
+
     const user = await this.usersRepository.findOne({
       where: { id: userId, organizationId },
     });
@@ -88,6 +107,7 @@ export class UsersService {
     user.role = role;
     return this.usersRepository.save(user);
   }
+
 
   // Видалити користувача з організації
   async removeUser(userId: string, organizationId: string): Promise<void> {
