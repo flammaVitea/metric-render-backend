@@ -33,8 +33,8 @@ export class ChartEntity {
   @Column({ type: 'text', nullable: true })
   color: string | null;
 
-  @Column({ name: 'user_id', type: 'uuid' })
-  userId: string;
+  @Column({ name: 'organization_id', type: 'uuid' })
+  organizationId: string;
 
   @Column({ name: 'refresh_interval', type: 'int', nullable: true })
   refreshInterval: number | null;

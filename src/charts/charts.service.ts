@@ -50,17 +50,17 @@ export class ChartsService {
     };
   }
 
-  async findAll(userId?: string, dashboardId?: string) {
+  async findAll(organizationId?: string, dashboardId?: string) {
     const where: Record<string, string> = {};
-    if (userId) where.userId = userId;
+    if (organizationId) where.organizationId = organizationId;
     if (dashboardId) where.dashboardId = dashboardId;
 
     const charts = await this.chartsRepository.find({ where });
     return charts.map((c) => this.formatChartResponse(c));
   }
 
-  async findOne(id: string, userId?: string) {
-    const where = userId ? { id, userId } : { id };
+  async findOne(id: string, organizationId?: string) {
+    const where = organizationId ? { id, organizationId } : { id };
     const chart = await this.chartsRepository.findOne({ where });
     if (!chart) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);
@@ -68,7 +68,7 @@ export class ChartsService {
     return this.formatChartResponse(chart);
   }
 
-  async create(payload: ChartInput, userId: string) {
+  async create(payload: ChartInput, organizationId: string) {
     const id = payload.id ?? uuidv7();
     if (!isUUID(id, 'all')) {
       throw new BadRequestException('ID графіка має бути UUID');
@@ -89,7 +89,7 @@ export class ChartsService {
       xAxisField: payload.xAxisField ?? null,
       yAxisField: payload.yAxisField ?? null,
       color: payload.color ?? '#1890ff',
-      userId,
+      organizationId: organizationId,
       refreshInterval: payload.refreshInterval ?? null,
     });
 
@@ -97,8 +97,8 @@ export class ChartsService {
     return this.formatChartResponse(saved);
   }
 
-  async update(id: string, payload: ChartInput, userId?: string) {
-    const where = userId ? { id, userId } : { id };
+  async update(id: string, payload: ChartInput, organizationId?: string) {
+    const where = organizationId ? { id, organizationId } : { id };
     const existing = await this.chartsRepository.findOne({ where });
     if (!existing) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);
@@ -131,8 +131,8 @@ export class ChartsService {
     return this.formatChartResponse(saved);
   }
 
-  async remove(id: string, userId?: string): Promise<void> {
-    const where = userId ? { id, userId } : { id };
+  async remove(id: string, organizationId?: string): Promise<void> {
+    const where = organizationId ? { id, organizationId } : { id };
     const existing = await this.chartsRepository.findOne({ where });
     if (!existing) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);

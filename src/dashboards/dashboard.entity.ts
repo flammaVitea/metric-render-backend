@@ -24,6 +24,6 @@ export class DashboardEntity {
   })
   chartsOrder: Record<string, string[]>;
 
-  @Column({ name: 'user_id', type: 'uuid' })
-  userId: string;
+  @Column({ name: 'organization_id', type: 'uuid' })
+  organizationId: string;
 }

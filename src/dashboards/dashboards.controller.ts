@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
   Put,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -15,26 +14,30 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardEntity } from './dashboard.entity';
 import { DashboardsService } from './dashboards.service';
 
+// Зверніть увагу: ми залишаємо тільки JwtAuthGuard, щоб всі ролі (навіть Менеджер) мали доступ
 @UseGuards(JwtAuthGuard)
 @Controller('dashboards')
 export class DashboardsController {
   constructor(private readonly dashboardsService: DashboardsService) {}
 
   @Get()
-  async findAll(@Req() req: any, @Query('userId') queryUserId?: string) {
-    const userId = req.user?.userId ?? queryUserId;
-    return this.dashboardsService.findAll(userId);
+  async findAll(@Req() req: any) {
+    console.log('--- ЗАПИТ ДАШБОРДІВ ---');
+    console.log('Email:', req.user.email);
+    console.log('Роль:', req.user.role);
+    console.log('orgId з токена:', req.user.orgId);
+    
+    return this.dashboardsService.findAll(req.user.orgId);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req: any) {
-    return this.dashboardsService.findOne(id, req.user?.userId);
+    return this.dashboardsService.findOne(id, req.user.orgId);
   }
 
   @Post()
   async create(@Body() body: Partial<DashboardEntity>, @Req() req: any) {
-    const userId = req.user.userId;
-    return this.dashboardsService.create(body, userId);
+    return this.dashboardsService.create(body, req.user.orgId);
   }
 
   @Patch(':id')
@@ -43,10 +46,9 @@ export class DashboardsController {
     @Body() body: Partial<DashboardEntity>,
     @Req() req: any,
   ) {
-    return this.dashboardsService.update(id, body, req.user?.userId);
+    return this.dashboardsService.update(id, body, req.user.orgId);
   }
 
-  // Ендпоінт для оновлення порядку карток у секції
   @Patch(':id/reorder-charts')
   async reorderCharts(
     @Param('id') id: string,
@@ -57,7 +59,7 @@ export class DashboardsController {
       id,
       body.sectionName,
       body.chartIds,
-      req.user?.userId,
+      req.user.orgId,
     );
   }
 
@@ -67,12 +69,12 @@ export class DashboardsController {
     @Body() body: Partial<DashboardEntity>,
     @Req() req: any,
   ) {
-    return this.dashboardsService.update(id, body, req.user?.userId);
+    return this.dashboardsService.update(id, body, req.user.orgId);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
-    await this.dashboardsService.remove(id, req.user?.userId);
+    await this.dashboardsService.remove(id, req.user.orgId);
     return {};
   }
 
@@ -86,7 +88,7 @@ export class DashboardsController {
       id,
       body.sectionName,
       body.items,
-      req.user?.userId,
+      req.user.orgId,
     );
   }
 }

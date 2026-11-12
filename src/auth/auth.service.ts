@@ -114,7 +114,7 @@ export class AuthService {
       email: normalizedEmail,
       password: hashedPassword,
       organizationId: org.id,
-      role: 'MEMBER',
+      role: 'MANAGER',
       status: 'PENDING', // Очікує підтвердження
     });
 

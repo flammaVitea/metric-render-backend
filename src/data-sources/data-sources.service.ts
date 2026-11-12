@@ -18,15 +18,15 @@ export class DataSourcesService {
     private readonly dataSourcesRepository: Repository<DataSourceEntity>,
   ) {}
 
-  async findAll(userId?: string): Promise<DataSourceEntity[]> {
-    if (userId) {
-      return this.dataSourcesRepository.find({ where: { userId } });
+  async findAll(organizationId?: string): Promise<DataSourceEntity[]> {
+    if (organizationId) {
+      return this.dataSourcesRepository.find({ where: { organizationId } });
     }
     return this.dataSourcesRepository.find();
   }
 
-  async findOne(id: string, userId?: string): Promise<DataSourceEntity> {
-    const where = userId ? { id, userId } : { id };
+  async findOne(id: string, organizationId?: string): Promise<DataSourceEntity> {
+    const where = organizationId ? { id, organizationId } : { id };
     const source = await this.dataSourcesRepository.findOne({ where });
     if (!source) {
       throw new NotFoundException(`Джерело даних з id "${id}" не знайдено`);
@@ -36,7 +36,7 @@ export class DataSourcesService {
 
   async create(
     payload: Partial<DataSourceEntity>,
-    userId: string,
+    organizationId: string,
   ): Promise<DataSourceEntity> {
     const id = payload.id ?? uuidv7();
     if (!isUUID(id, 'all')) {
@@ -55,7 +55,7 @@ export class DataSourcesService {
       hiddenFields: Array.isArray(payload.hiddenFields)
         ? payload.hiddenFields
         : null,
-      userId,
+      organizationId,
     });
     return this.dataSourcesRepository.save(entity);
   }
@@ -63,9 +63,9 @@ export class DataSourcesService {
   async update(
     id: string,
     payload: Partial<DataSourceEntity>,
-    userId?: string,
+    organizationId?: string,
   ): Promise<DataSourceEntity> {
-    const existing = await this.findOne(id, userId);
+    const existing = await this.findOne(id, organizationId);
 
     if (payload.name !== undefined) existing.name = payload.name;
     if (payload.type !== undefined) existing.type = payload.type;
@@ -84,8 +84,8 @@ export class DataSourcesService {
     return this.dataSourcesRepository.save(existing);
   }
 
-  async remove(id: string, userId?: string): Promise<void> {
-    const existing = await this.findOne(id, userId);
+  async remove(id: string, organizationId?: string): Promise<void> {
+    const existing = await this.findOne(id, organizationId);
     await this.dataSourcesRepository.remove(existing);
   }
 }

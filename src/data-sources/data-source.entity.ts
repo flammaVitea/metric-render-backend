@@ -29,6 +29,6 @@ export class DataSourceEntity {
   @Column({ name: 'hidden_fields', type: 'jsonb', nullable: true })
   hiddenFields: string[] | null;
 
-  @Column({ name: 'user_id', type: 'uuid' })
-  userId: string;
+  @Column({ name: 'organization_id', type: 'uuid' })
+  organizationId: string;
 }

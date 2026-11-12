@@ -17,7 +17,7 @@ export class UserEntity {
   @Column({ type: 'uuid', name: 'organization_id', nullable: true })
   organizationId: string | null;
 
-  @Column({ type: 'text', default: 'MEMBER' })
+  @Column({ type: 'text', default: 'MANAGER' })
   role: UserRole;
 
   @Column({ type: 'text', default: 'PENDING' })

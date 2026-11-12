@@ -23,7 +23,7 @@ import { OrganizationEntity } from './organizations/organization.entity';
       password: process.env.DB_PASSWORD ?? 'change-me', // ваш реальний пароль
       database: process.env.DB_DATABASE ?? 'my_database', // або 'metric_db' / 'metric_render'
       entities: [UserEntity, OrganizationEntity, DataSourceEntity, DashboardEntity, ChartEntity],
-      synchronize: false,
+      synchronize: true,
     }),
     AuthModule,
     UsersModule,

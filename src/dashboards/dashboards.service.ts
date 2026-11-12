@@ -23,20 +23,17 @@ export class DashboardsService {
     private readonly dashboardsRepository: Repository<DashboardEntity>,
   ) {}
 
-  async findAll(userId?: string): Promise<DashboardEntity[]> {
-    if (userId) {
-      return this.dashboardsRepository.find({ where: { userId } });
-    }
-    return this.dashboardsRepository.find();
+  async findAll(orgId: string): Promise<DashboardEntity[]> {
+    return this.dashboardsRepository.find({ where: { organizationId: orgId } });
   }
 
   async updateSectionLayout(
     dashboardId: string,
     sectionName: string,
     items: ChartLayoutItem[],
-    userId?: string,
+    organizationId?: string,
   ): Promise<DashboardEntity> {
-    const dashboard = await this.findOne(dashboardId, userId);
+    const dashboard = await this.findOne(dashboardId, organizationId);
     const currentOrder = dashboard.chartsOrder || {};
   
     // Зберігаємо масив об'єктів { id, span } для секції
@@ -46,8 +43,8 @@ export class DashboardsService {
     return this.dashboardsRepository.save(dashboard);
   }
 
-  async findOne(id: string, userId?: string): Promise<DashboardEntity> {
-    const where = userId ? { id, userId } : { id };
+  async findOne(id: string, organizationId?: string): Promise<DashboardEntity> {
+    const where = organizationId ? { id, organizationId } : { id };
     const dashboard = await this.dashboardsRepository.findOne({ where });
     if (!dashboard) {
       throw new NotFoundException(`Дашборд з id "${id}" не знайдено`);
@@ -57,7 +54,7 @@ export class DashboardsService {
 
   async create(
     payload: Partial<DashboardEntity>,
-    userId: string,
+    organizationId: string,
   ): Promise<DashboardEntity> {
     const id = payload.id ?? uuidv7();
     if (!isUUID(id, 'all')) {
@@ -70,7 +67,7 @@ export class DashboardsService {
         ? payload.sectionOrder
         : [],
       chartsOrder: payload.chartsOrder ?? {},
-      userId,
+      organizationId,
     });
     return this.dashboardsRepository.save(entity);
   }
