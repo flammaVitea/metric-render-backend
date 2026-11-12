@@ -6,9 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { isUUID } from 'class-validator';
-
 import { v7 as uuidv7 } from 'uuid';
-
 import { ChartEntity } from './chart.entity';
 
 export type ChartInput = Partial<ChartEntity> & { sourceId?: string };
@@ -27,12 +25,10 @@ export class ChartsService {
     } else if (payload.sourceId) {
       ids = [payload.sourceId];
     }
-
     if (ids.some((id) => !isUUID(id, 'all'))) {
-      throw new BadRequestException('ID джерела даних має бути UUID');
+      throw new BadRequestException('ID має бути валідним UUID');
     }
-
-    // Для кругового графіка (pie) дозволяється лише одне джерело
+    // Для кругових графіків залишаємо тільки перше джерело
     if ((chartType === 'pie' || chartType === 'doughnut') && ids.length > 1) {
       ids = [ids[0]];
     }
@@ -50,32 +46,34 @@ export class ChartsService {
     };
   }
 
-  async findAll(organizationId?: string, dashboardId?: string) {
-    const where: Record<string, string> = {};
-    if (organizationId) where.organizationId = organizationId;
+  // ЗМІНЕНО: Використовуємо organizationId замість userId
+  async findAll(organizationId: string, dashboardId?: string) {
+    const where: Record<string, string> = { organizationId }; // Обов'язково фільтруємо за організацією
     if (dashboardId) where.dashboardId = dashboardId;
 
     const charts = await this.chartsRepository.find({ where });
     return charts.map((c) => this.formatChartResponse(c));
   }
 
-  async findOne(id: string, organizationId?: string) {
-    const where = organizationId ? { id, organizationId } : { id };
-    const chart = await this.chartsRepository.findOne({ where });
+  // ЗМІНЕНО: Використовуємо organizationId
+  async findOne(id: string, organizationId: string) {
+    const chart = await this.chartsRepository.findOne({ where: { id, organizationId } });
     if (!chart) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);
     }
     return this.formatChartResponse(chart);
   }
 
+  // Створення залишається майже без змін, бо ви вже передавали organizationId
   async create(payload: ChartInput, organizationId: string) {
     const id = payload.id ?? uuidv7();
     if (!isUUID(id, 'all')) {
-      throw new BadRequestException('ID графіка має бути UUID');
+      throw new BadRequestException('ID має бути валідним UUID');
     }
     if (!payload.dashboardId || !isUUID(payload.dashboardId, 'all')) {
-      throw new BadRequestException('ID дашборда має бути UUID');
+      throw new BadRequestException('ID дашборда має бути валідним UUID');
     }
+
     const type = payload.type ?? 'bar';
     const sourceIds = this.normalizeSourceIds(payload, type);
 
@@ -89,7 +87,7 @@ export class ChartsService {
       xAxisField: payload.xAxisField ?? null,
       yAxisField: payload.yAxisField ?? null,
       color: payload.color ?? '#1890ff',
-      organizationId: organizationId,
+      organizationId: organizationId, // Прив'язка до організації
       refreshInterval: payload.refreshInterval ?? null,
     });
 
@@ -97,43 +95,38 @@ export class ChartsService {
     return this.formatChartResponse(saved);
   }
 
-  async update(id: string, payload: ChartInput, organizationId?: string) {
-    const where = organizationId ? { id, organizationId } : { id };
-    const existing = await this.chartsRepository.findOne({ where });
+  // ЗМІНЕНО: Оновлення перевіряє organizationId
+  async update(id: string, payload: ChartInput, organizationId: string) {
+    const existing = await this.chartsRepository.findOne({ where: { id, organizationId } });
     if (!existing) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);
     }
 
     const nextType = payload.type ?? existing.type;
-    if (payload.dashboardId !== undefined) {
-      existing.dashboardId = payload.dashboardId;
-    }
+
+    if (payload.dashboardId !== undefined) existing.dashboardId = payload.dashboardId;
+    
     if (payload.sourceIds !== undefined || payload.sourceId !== undefined) {
       existing.sourceIds = this.normalizeSourceIds(payload, nextType);
     } else if (nextType === 'pie' && existing.sourceIds.length > 1) {
       existing.sourceIds = [existing.sourceIds[0]];
     }
+
     if (payload.section !== undefined) existing.section = payload.section;
     if (payload.title !== undefined) existing.title = payload.title;
     if (payload.type !== undefined) existing.type = payload.type;
-    if (payload.xAxisField !== undefined) {
-      existing.xAxisField = payload.xAxisField;
-    }
-    if (payload.yAxisField !== undefined) {
-      existing.yAxisField = payload.yAxisField;
-    }
+    if (payload.xAxisField !== undefined) existing.xAxisField = payload.xAxisField;
+    if (payload.yAxisField !== undefined) existing.yAxisField = payload.yAxisField;
     if (payload.color !== undefined) existing.color = payload.color;
-    
-    if (payload.refreshInterval !== undefined) {
-      existing.refreshInterval = payload.refreshInterval;
-    }
+    if (payload.refreshInterval !== undefined) existing.refreshInterval = payload.refreshInterval;
+
     const saved = await this.chartsRepository.save(existing);
     return this.formatChartResponse(saved);
   }
 
-  async remove(id: string, organizationId?: string): Promise<void> {
-    const where = organizationId ? { id, organizationId } : { id };
-    const existing = await this.chartsRepository.findOne({ where });
+  // ЗМІНЕНО: Видалення перевіряє organizationId
+  async remove(id: string, organizationId: string): Promise<void> {
+    const existing = await this.chartsRepository.findOne({ where: { id, organizationId } });
     if (!existing) {
       throw new NotFoundException(`Графік з id "${id}" не знайдено`);
     }

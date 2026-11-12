@@ -12,61 +12,54 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { ChartsService, type ChartInput } from './charts.service';
 
+// Застосовуємо один Guard на весь контролер
+@UseGuards(JwtAuthGuard)
 @Controller('charts')
 export class ChartsController {
   constructor(private readonly chartsService: ChartsService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(
     @Req() req: any,
-    @Query('userId') queryUserId?: string,
-    @Query('dashboardId') dashboardId?: string,
+    @Query('dashboardId') dashboardId?: string, // Видалили queryUserId
   ) {
-    const userId = req.user?.userId ?? queryUserId;
-    return this.chartsService.findAll(userId, dashboardId);
+    // Передаємо orgId з токена
+    return this.chartsService.findAll(req.user.orgId, dashboardId);
   }
 
-  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req: any) {
-    return this.chartsService.findOne(id, req.user?.userId);
+    return this.chartsService.findOne(id, req.user.orgId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() body: ChartInput, @Req() req: any) {
-    const userId = req.user.userId;
-    return this.chartsService.create(body, userId);
+    return this.chartsService.create(body, req.user.orgId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() body: ChartInput,
     @Req() req: any,
   ) {
-    return this.chartsService.update(id, body, req.user?.userId);
+    return this.chartsService.update(id, body, req.user.orgId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async patch(
     @Param('id') id: string,
     @Body() body: ChartInput,
     @Req() req: any,
   ) {
-    return this.chartsService.update(id, body, req.user?.userId);
+    return this.chartsService.update(id, body, req.user.orgId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
-    await this.chartsService.remove(id, req.user?.userId);
+    await this.chartsService.remove(id, req.user.orgId);
     return {};
   }
 }
