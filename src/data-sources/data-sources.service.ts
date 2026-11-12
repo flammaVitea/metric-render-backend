@@ -13,6 +13,8 @@ import { DataSourceEntity } from './data-source.entity';
 
 import * as fs from 'fs';
 import * as path from 'path';
+import csv = require('csv-parser');
+
 
 
 @Injectable()
@@ -114,5 +116,34 @@ export class DataSourcesService {
     // 4. Повертаємо відносний шлях, який фронтенд запише у urlOrPath
     return { path: `uploads/${orgId}/${safeFilename}` };
   }
+
+  async readCsvData(filePath: string): Promise<Record<string, string>[]> {
+    const fullPath = path.join(process.cwd(), filePath);
+
+    if (!fs.existsSync(fullPath)) {
+      throw new NotFoundException('CSV файл не знайдено');
+    }
+
+    const results: Record<string, string>[] = [];
+
+    return new Promise<Record<string, string>[]>((resolve, reject) => {
+      fs.createReadStream(fullPath)
+        .pipe(csv())
+        .on('data', (data: Record<string, string>) => {
+          const sanitizedRow: Record<string, string> = {};
+          for (const [key, value] of Object.entries(data)) {
+            let safeValue = value as string;
+            if (typeof safeValue === 'string' && /^[=+\-@\t\r]/.test(safeValue)) {
+              safeValue = "'" + safeValue;
+            }
+            sanitizedRow[key] = safeValue;
+          }
+          results.push(sanitizedRow);
+        })
+        .on('end', () => resolve(results))
+        .on('error', (error: Error) => reject(error));
+    });
+  }
+
 
 }
