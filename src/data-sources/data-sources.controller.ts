@@ -44,18 +44,20 @@ export class DataSourcesController {
 
   @Get()
   async findAll(@Req() req: any) {
-    // Отримуємо джерела даних для всієї організації
-    return this.dataSourcesService.findAll(req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    return this.dataSourcesService.findAll(req.user.orgId);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() req: any) {
-    return this.dataSourcesService.findOne(id, req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    return this.dataSourcesService.findOne(id, req.user.orgId);
   }
 
   @Post()
   async create(@Body() body: Partial<DataSourceEntity>, @Req() req: any) {
-    return this.dataSourcesService.create(body, req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    return this.dataSourcesService.create(body, req.user.orgId);
   }
 
   @Put(':id')
@@ -64,7 +66,8 @@ export class DataSourcesController {
     @Body() body: Partial<DataSourceEntity>,
     @Req() req: any,
   ) {
-    return this.dataSourcesService.update(id, body, req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    return this.dataSourcesService.update(id, body, req.user.orgId);
   }
 
   @Patch(':id')
@@ -73,34 +76,41 @@ export class DataSourcesController {
     @Body() body: Partial<DataSourceEntity>,
     @Req() req: any,
   ) {
-    return this.dataSourcesService.update(id, body, req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    return this.dataSourcesService.update(id, body, req.user.orgId);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
-    await this.dataSourcesService.remove(id, req.user.organizationId);
+    // ЗМІНЕНО: organizationId -> orgId
+    await this.dataSourcesService.remove(id, req.user.orgId);
     return {};
   }
   
   @Post('upload-csv')
-    @UseInterceptors(FileInterceptor('file', {
-      limits: {
-        fileSize: 5 * 1024 * 1024, // Максимум 5 МБ
-      },
-      fileFilter: (req, file, callback) => {
-        // Захист: пропускаємо лише файли з розширенням .csv
-        if (!file.originalname.match(/\.(csv)$/i)) {
-          return callback(new BadRequestException('Дозволені лише CSV файли'), false);
-        }
-        callback(null, true);
-      },
-    }))
-    async uploadCsv(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
-      if (!file) {
-        throw new BadRequestException('Файл не знайдено');
+  @UseInterceptors(FileInterceptor('file', {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // Максимум 5 МБ
+    },
+    fileFilter: (req, file, callback) => {
+      // Захист: пропускаємо лише файли з розширенням .csv
+      if (!file.originalname.match(/\.(csv)$/i)) {
+        return callback(new BadRequestException('Дозволені лише CSV файли'), false);
       }
-      
-      // Передаємо файл у сервіс для збереження
-      return this.dataSourcesService.saveUploadedCsv(file, req.user.orgId);
+      callback(null, true);
+    },
+  }))
+  async uploadCsv(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
+    if (!file) {
+      throw new BadRequestException('Файл не знайдено');
     }
+    
+    // Передаємо файл у сервіс для збереження
+    return this.dataSourcesService.saveUploadedCsv(file, req.user.orgId);
   }
+
+  @Get(':id/data')
+  async getSourceData(@Param('id') id: string, @Req() req: any) {
+    return this.dataSourcesService.getSourceData(id, req.user.orgId);
+  }
+}

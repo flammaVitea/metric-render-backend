@@ -42,12 +42,14 @@ export class DataSourcesService {
 
   async create(
     payload: Partial<DataSourceEntity>,
-    organizationId: string,
+    organizationId: string, // <-- Цей параметр має прийти з контролера
   ): Promise<DataSourceEntity> {
     const id = payload.id ?? uuidv7();
     if (!isUUID(id, 'all')) {
       throw new BadRequestException('ID джерела даних має бути UUID');
     }
+    
+    // Переконайтеся, що organizationId додається до entity
     const entity = this.dataSourcesRepository.create({
       id,
       name: payload.name,
@@ -55,16 +57,14 @@ export class DataSourcesService {
       urlOrPath: payload.urlOrPath ?? '',
       status: payload.status ?? 'pending',
       lastSync: payload.lastSync ? new Date(payload.lastSync) : new Date(),
-      visibleFields: Array.isArray(payload.visibleFields)
-        ? payload.visibleFields
-        : null,
-      hiddenFields: Array.isArray(payload.hiddenFields)
-        ? payload.hiddenFields
-        : null,
-      organizationId,
+      visibleFields: Array.isArray(payload.visibleFields) ? payload.visibleFields : null,
+      hiddenFields: Array.isArray(payload.hiddenFields) ? payload.hiddenFields : null,
+      organizationId: organizationId,
     });
+    
     return this.dataSourcesRepository.save(entity);
   }
+
 
   async update(
     id: string,
@@ -117,20 +117,23 @@ export class DataSourcesService {
     return { path: `uploads/${orgId}/${safeFilename}` };
   }
 
-  async readCsvData(filePath: string): Promise<Record<string, string>[]> {
+  async readCsvData(filePath: string): Promise<any[]> {
     const fullPath = path.join(process.cwd(), filePath);
-
+    
     if (!fs.existsSync(fullPath)) {
       throw new NotFoundException('CSV файл не знайдено');
     }
 
-    const results: Record<string, string>[] = [];
-
-    return new Promise<Record<string, string>[]>((resolve, reject) => {
+    // Додано тип для масиву
+    const results: Record<string, any>[] = [];
+    
+    return new Promise((resolve, reject) => {
       fs.createReadStream(fullPath)
         .pipe(csv())
-        .on('data', (data: Record<string, string>) => {
-          const sanitizedRow: Record<string, string> = {};
+        .on('data', (data) => {
+          // Додано тип для об'єкта, щоб TypeScript дозволив записувати значення за строковим ключем
+          const sanitizedRow: Record<string, any> = {};
+          
           for (const [key, value] of Object.entries(data)) {
             let safeValue = value as string;
             if (typeof safeValue === 'string' && /^[=+\-@\t\r]/.test(safeValue)) {
@@ -141,8 +144,27 @@ export class DataSourcesService {
           results.push(sanitizedRow);
         })
         .on('end', () => resolve(results))
-        .on('error', (error: Error) => reject(error));
+        .on('error', (error) => reject(error));
     });
+  }
+
+    // Додайте цей метод у DataSourcesService
+  async getSourceData(id: string, organizationId: string): Promise<any[]> {
+    const source = await this.findOne(id, organizationId);
+
+    if (source.type === 'csv') {
+      if (!source.urlOrPath) {
+        throw new BadRequestException('Шлях до CSV файлу порожній');
+      }
+      // Викликаємо наш безпечний метод читання
+      return this.readCsvData(source.urlOrPath);
+    }
+
+    if (source.type === 'rest') {
+      throw new BadRequestException('REST API джерела повинні оброблятися на фронтенді (або додайте axios на бекенд)');
+    }
+
+    throw new BadRequestException('Невідомий тип джерела даних');
   }
 
 
