@@ -124,12 +124,18 @@ export class ChartsService {
     return this.formatChartResponse(saved);
   }
 
-  // ЗМІНЕНО: Видалення перевіряє organizationId
   async remove(id: string, organizationId: string): Promise<void> {
-    const existing = await this.chartsRepository.findOne({ where: { id, organizationId } });
-    if (!existing) {
-      throw new NotFoundException(`Графік з id "${id}" не знайдено`);
+    // Спочатку знаходимо графік, гарантуючи, що він належить поточній організації
+    const chart = await this.chartsRepository.findOne({ 
+      where: { id, organizationId } 
+    });
+
+    if (!chart) {
+      throw new NotFoundException('Графік не знайдено або він не належить вашій організації');
     }
-    await this.chartsRepository.remove(existing);
+
+    // Видаляємо знайдений запис
+    await this.chartsRepository.remove(chart);
   }
+
 }

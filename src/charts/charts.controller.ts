@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -59,7 +60,16 @@ export class ChartsController {
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Req() req: any) {
+    const role = req.user.role;
+    
+    // БЕЗПЕКА: Жорстка перевірка ролі на бекенді
+    if (role !== 'ADMIN' && role !== 'ANALYST') {
+      throw new ForbiddenException('Тільки адміністратор або аналітик можуть видаляти графіки');
+    }
+
+    // Передаємо id графіка та id організації (для ізоляції даних)
     await this.chartsService.remove(id, req.user.orgId);
-    return {};
+    return { success: true, message: 'Графік видалено' };
   }
+
 }
