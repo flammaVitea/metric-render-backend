@@ -13,6 +13,10 @@ import { UserEntity } from './users/user.entity';
 import { UsersModule } from './users/users.module';
 import { OrganizationEntity } from './organizations/organization.entity';
 
+import { MailerModule } from '@nestjs-modules/mailer';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { AuditLogEntity } from './auth/audit-log.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -22,8 +26,30 @@ import { OrganizationEntity } from './organizations/organization.entity';
       username: process.env.DB_USERNAME ?? 'admin', // або 'postgres' / 'metric_render_user'
       password: process.env.DB_PASSWORD ?? 'change-me', // ваш реальний пароль
       database: process.env.DB_DATABASE ?? 'my_database', // або 'metric_db' / 'metric_render'
-      entities: [UserEntity, OrganizationEntity, DataSourceEntity, DashboardEntity, ChartEntity],
+      entities: [
+        UserEntity,
+        OrganizationEntity,
+        DataSourceEntity,
+        DashboardEntity,
+        ChartEntity,
+        AuditLogEntity,
+      ],
       synchronize: false,
+    }),
+    RedisModule.forRoot({
+      type: 'single',
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: 'localhost',
+        port: 1025, // Порт Mailpit SMTP
+        secure: false,
+        ignoreTLS: true,
+      },
+      defaults: {
+        from: '"Система" <noreply@vash-doemn.com>',
+      },
     }),
     AuthModule,
     UsersModule,
@@ -34,4 +60,5 @@ import { OrganizationEntity } from './organizations/organization.entity';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+}

@@ -23,6 +23,9 @@ export class UserEntity {
   @Column({ type: 'text', default: 'PENDING' })
   status: UserStatus;
 
+  @Column({ name: 'is_two_factor_enabled', type: 'boolean', default: false })
+  isTwoFactorEnabled: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

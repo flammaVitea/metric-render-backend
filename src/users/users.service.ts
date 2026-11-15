@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, UnauthorizedException} from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { UserEntity, UserStatus, UserRole } from './user.entity';
@@ -11,6 +12,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
+    private readonly mailerService: MailerService,
   ) {}
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -70,8 +72,23 @@ export class UsersService {
       throw new NotFoundException('Користувача не знайдено в цій організації');
     }
 
+    const previousStatus = user.status;
     user.status = status;
-    return this.usersRepository.save(user);
+    const updatedUser = await this.usersRepository.save(user);
+
+    if (previousStatus === 'PENDING' && status === 'ACTIVE') {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject: 'Ваш обліковий запис підтверджено!',
+        html: `
+          <h3>Вітаємо!</h3>
+          <p>Адміністратор підтвердив ваш обліковий запис.</p>
+          <p>Тепер ви можете увійти в систему, використовуючи ваші облікові дані.</p>
+        `,
+      });
+    }
+
+    return updatedUser;
   }
 
   async updateRole(
