@@ -1,0 +1,23 @@
+@baseUrl = http://localhost:3000
+
+### 1. Вхід у систему
+# @name loginReq
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin-5@example.com",
+  "password": "P@ssw0rd"
+}
+
+### 2. Отримати всі дашборди
+GET {{baseUrl}}/dashboards
+Authorization: Bearer {{loginReq.response.body.token}}
+
+### 3. Отримати всі графіки
+GET {{baseUrl}}/charts
+Authorization: Bearer {{loginReq.response.body.token}}
+
+### 4. Отримати всі джерела даних
+GET {{baseUrl}}/data-sources
+Authorization: Bearer {{loginReq.response.body.token}}
