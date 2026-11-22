@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -23,6 +22,12 @@ import { v7 as uuidv7 } from 'uuid';
 import { UserEntity } from '../users/user.entity';
 import { OrganizationEntity } from '../organizations/organization.entity';
 import { AuditLogEntity, AuditLogStatus } from './audit-log.entity';
+import { AccountContext, AccountStatus } from './patterns/state/account-state';
+import {
+  AuthEventPublisher,
+  AuditLogObserver,
+  EmailNotificationObserver,
+} from './patterns/observer/auth-observer';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +35,7 @@ export class AuthService {
   private readonly LOCK_TIME_SECONDS = 15 * 60;
   private readonly TWO_FACTOR_TTL_SECONDS = 5 * 60;
   private readonly RESET_TOKEN_TTL_SECONDS = 60 * 60;
+  private readonly eventPublisher = new AuthEventPublisher();
 
   constructor(
     @InjectRepository(UserEntity)
@@ -42,7 +48,10 @@ export class AuthService {
     private readonly auditLogRepo: Repository<AuditLogEntity>,
     @InjectRedis()
     private readonly redis: Redis,
-  ) {}
+  ) {
+    this.eventPublisher.subscribe(new AuditLogObserver());
+    this.eventPublisher.subscribe(new EmailNotificationObserver());
+  }
 
   private async verifyCaptcha(token: string): Promise<void> {
     const secretKey = process.env.CAPTCHA_SECRET_KEY;
@@ -112,6 +121,12 @@ export class AuthService {
           ipAddress,
           user?.organizationId ?? null,
         );
+        await this.eventPublisher.notify({
+          type: 'LOCKED_OUT',
+          email: normalizedEmail,
+          ipAddress,
+          timestamp: new Date(),
+        });
 
         throw new HttpException(
           `Забагато невдалих спроб. Спробуйте через ${Math.ceil(ttl / 60)} хвилин.`,
@@ -142,22 +157,17 @@ export class AuthService {
         ipAddress,
         user?.organizationId ?? null,
       );
+      await this.eventPublisher.notify({
+        type: 'LOGIN_FAILED',
+        email: normalizedEmail,
+        ipAddress,
+        timestamp: new Date(),
+      });
       throw new UnauthorizedException('Невірна email-адреса або пароль');
     }
 
     await this.redis.del(redisKey);
-
-    if (user.status === 'PENDING') {
-      throw new ForbiddenException(
-        'Ваш обліковий запис очікує підтвердження адміністратором організації.',
-      );
-    }
-
-    if (user.status === 'REJECTED') {
-      throw new ForbiddenException(
-        'Ваш запит на приєднання до організації було відхилено.',
-      );
-    }
+    new AccountContext(user.status as AccountStatus).assertCanLogin();
 
     if (user.isTwoFactorEnabled) {
       const otp = randomInt(100_000, 1_000_000).toString();
@@ -477,6 +487,11 @@ export class AuthService {
     });
 
     await this.usersRepository.save(user);
+    await this.eventPublisher.notify({
+      type: 'USER_REGISTERED',
+      email: user.email,
+      timestamp: new Date(),
+    });
 
     const escapedEmail = user.email.replace(/[&<>"']/g, (character) => {
       const entities: Record<string, string> = {

@@ -14,7 +14,7 @@ export class PendingAccountState implements AccountState {
 
   assertCanLogin(): void {
     throw new ForbiddenException(
-      'Обліковий запис очікує підтвердження адміністратором',
+      'Ваш обліковий запис очікує підтвердження адміністратором організації.',
     );
   }
 
@@ -47,7 +47,9 @@ export class RejectedAccountState implements AccountState {
   readonly status: AccountStatus = 'REJECTED';
 
   assertCanLogin(): void {
-    throw new ForbiddenException('Заявку на реєстрацію відхилено');
+    throw new ForbiddenException(
+      'Ваш запит на приєднання до організації було відхилено.',
+    );
   }
 
   approve(): AccountState {

@@ -3,6 +3,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { UserEntity, UserStatus, UserRole } from './user.entity';
+import { AccountContext, AccountStatus } from '../auth/patterns/state/account-state';
 
 import * as bcrypt from 'bcryptjs';
 
@@ -73,7 +74,14 @@ export class UsersService {
     }
 
     const previousStatus = user.status;
-    user.status = status;
+    const account = new AccountContext(user.status as AccountStatus);
+    if (status === 'ACTIVE') {
+      user.status = account.approve();
+    } else if (status === 'REJECTED') {
+      user.status = account.reject();
+    } else {
+      user.status = status;
+    }
     const updatedUser = await this.usersRepository.save(user);
 
     if (previousStatus === 'PENDING' && status === 'ACTIVE') {
